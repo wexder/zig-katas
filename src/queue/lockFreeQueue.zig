@@ -113,18 +113,29 @@ test "parallel string lock queue" {
     var q = LockFreeQueue([]const u8).init(allocator);
     defer q.deinit();
 
+    const n = 1000;
+
     {
-        const handle = try std.Thread.spawn(.{}, test_queue_push_n, .{ &q, "test", 10 });
+        const handle = try std.Thread.spawn(.{}, test_queue_push_n, .{ &q, "test", n });
         defer handle.join();
 
-        const handle2 = try std.Thread.spawn(.{}, test_queue_push_n, .{ &q, "test", 10 });
+        const handle2 = try std.Thread.spawn(.{}, test_queue_push_n, .{ &q, "test", n });
         defer handle2.join();
 
-        const handle3 = try std.Thread.spawn(.{}, test_queue_push_n, .{ &q, "test", 10 });
+        const handle3 = try std.Thread.spawn(.{}, test_queue_push_n, .{ &q, "test", n });
         defer handle3.join();
+
+        const handle4 = try std.Thread.spawn(.{}, test_queue_push_n, .{ &q, "test", n });
+        defer handle4.join();
+
+        const handle5 = try std.Thread.spawn(.{}, test_queue_push_n, .{ &q, "test", n });
+        defer handle5.join();
+
+        const handle6 = try std.Thread.spawn(.{}, test_queue_push_n, .{ &q, "test", n });
+        defer handle6.join();
     }
 
-    for (0..30) |_| {
+    for (0..n * 6) |_| {
         const v = q.pop();
         try testing.expect(v != null);
         try testing.expectEqualStrings("test", v.?);
